@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Relatório de Cobertura de Testes - Plataforma Semear</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 20px;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+      overflow: hidden;
+    }
+
+    .header {
+      background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+      color: white;
+      padding: 30px;
+      text-align: center;
+    }
+
+    .header h1 {
+      font-size: 2.5rem;
+      margin-bottom: 10px;
+      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+    }
+
+    .header p {
+      font-size: 1.1rem;
+      opacity: 0.9;
+    }
+
+    .summary-cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 20px;
+      padding: 30px;
+      background: #f8f9fa;
+    }
+
+    .summary-card {
+      background: white;
+      padding: 25px;
+      border-radius: 15px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+      text-align: center;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .summary-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
+    }
+
+    .summary-card h3 {
+      color: #2c3e50;
+      font-size: 1.2rem;
+      margin-bottom: 10px;
+    }
+
+    .summary-card .value {
+      font-size: 2.5rem;
+      font-weight: bold;
+      margin-bottom: 5px;
+    }
+
+    .summary-card .unit {
+      color: #7f8c8d;
+      font-size: 0.9rem;
+    }
+
+    .stmts {
+      color: #3498db;
+    }
+
+    .branch {
+      color: #e74c3c;
+    }
+
+    .funcs {
+      color: #f39c12;
+    }
+
+    .lines {
+      color: #27ae60;
+    }
+
+    .controls {
+      padding: 30px;
+      background: white;
+      border-bottom: 1px solid #ecf0f1;
+    }
+
+    .filter-group {
+      display: flex;
+      gap: 20px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .filter-group label {
+      font-weight: 600;
+      color: #2c3e50;
+    }
+
+    .filter-group input,
+    .filter-group select {
+      padding: 10px 15px;
+      border: 2px solid #ecf0f1;
+      border-radius: 8px;
+      font-size: 1rem;
+      transition: border-color 0.3s ease;
+    }
+
+    .filter-group input:focus,
+    .filter-group select:focus {
+      outline: none;
+      border-color: #3498db;
+    }
+
+    .charts-section {
+      padding: 30px;
+      background: white;
+    }
+
+    .charts-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 30px;
+      margin-bottom: 30px;
+    }
+
+    .chart-container {
+      background: #f8f9fa;
+      padding: 20px;
+      border-radius: 15px;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+    }
+
+    .chart-container h3 {
+      text-align: center;
+      color: #2c3e50;
+      margin-bottom: 20px;
+      font-size: 1.3rem;
+    }
+
+    .table-section {
+      padding: 30px;
+      background: white;
+    }
+
+    .table-container {
+      overflow-x: auto;
+      border-radius: 15px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: white;
+    }
+
+    th {
+      background: linear-gradient(135deg, #34495e 0%, #2c3e50 100%);
+      color: white;
+      padding: 15px;
+      text-align: left;
+      font-weight: 600;
+    }
+
+    td {
+      padding: 12px 15px;
+      border-bottom: 1px solid #ecf0f1;
+    }
+
+    tr:hover {
+      background: #f8f9fa;
+    }
+
+    .coverage-bar {
+      width: 100%;
+      height: 20px;
+      background: #ecf0f1;
+      border-radius: 10px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .coverage-fill {
+      height: 100%;
+      border-radius: 10px;
+      transition: width 0.3s ease;
+    }
+
+    .coverage-text {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 0.8rem;
+      font-weight: bold;
+      color: white;
+      text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+    }
+
+    .status-badge {
+      padding: 5px 12px;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: bold;
+      text-transform: uppercase;
+    }
+
+    .excellent {
+      background: #27ae60;
+      color: white;
+    }
+
+    .good {
+      background: #f39c12;
+      color: white;
+    }
+
+    .poor {
+      background: #e74c3c;
+      color: white;
+    }
+
+    .none {
+      background: #95a5a6;
+      color: white;
+    }
+
+    @media (max-width: 768px) {
+      .charts-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .filter-group {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .header h1 {
+        font-size: 2rem;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>📊 Relatório de Cobertura de Testes</h1>
+      <p>Plataforma Semear - Análise Detalhada da Qualidade do Código</p>
+    </div>
+
+    <div class="summary-cards">
+      <div class="summary-card">
+        <h3>Cobertura de Statements</h3>
+        <div class="value stmts">90.41%</div>
+        <div class="unit">Excelente</div>
+      </div>
+      <div class="summary-card">
+        <h3>Cobertura de Branches</h3>
+        <div class="value branch">84.92%</div>
+        <div class="unit">Boa</div>
+      </div>
+      <div class="summary-card">
+        <h3>Cobertura de Funções</h3>
+        <div class="value funcs">88.80%</div>
+        <div class="unit">Boa</div>
+      </div>
+      <div class="summary-card">
+        <h3>Cobertura de Linhas</h3>
+        <div class="value lines">90.58%</div>
+        <div class="unit">Excelente</div>
+      </div>
+    </div>
+
+    <div class="controls">
+      <div class="filter-group">
+        <label for="moduleFilter">Filtrar por Módulo:</label>
+        <select id="moduleFilter">
+          <option value="">Todos os Módulos</option>
+          <option value="auth">Autenticação</option>
+          <option value="email">Email</option>
+          <option value="feedback">Feedback</option>
+          <option value="library">Biblioteca</option>
+          <option value="matching">Matching</option>
+          <option value="preMatching">Pre-Matching</option>
+          <option value="project">Projeto</option>
+          <option value="projectForm">Formulário de Projeto</option>
+          <option value="user">Usuário</option>
+        </select>
+
+        <label for="searchFilter">Buscar Arquivo:</label>
+        <input type="text" id="searchFilter" placeholder="Digite o nome do arquivo...">
+
+        <label for="coverageFilter">Filtrar por Cobertura:</label>
+        <select id="coverageFilter">
+          <option value="">Todas</option>
+          <option value="excellent">Excelente (≥90%)</option>
+          <option value="good">Boa (70-89%)</option>
+          <option value="poor">Baixa (<70%)< /option>
+          <option value="none">Sem Cobertura (0%)</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="charts-section">
+      <div class="charts-grid">
+        <div class="chart-container">
+          <h3>Distribuição Geral de Cobertura</h3>
+          <canvas id="overallChart"></canvas>
+        </div>
+        <div class="chart-container">
+          <h3>Cobertura por Módulo</h3>
+          <canvas id="moduleChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <div class="table-section">
+      <h2 style="margin-bottom: 20px; color: #2c3e50;">📁 Detalhes por Arquivo</h2>
+      <div class="table-container">
+        <table id="coverageTable">
+          <thead>
+            <tr>
+              <th>Arquivo</th>
+              <th>Módulo</th>
+              <th>Statements</th>
+              <th>Branches</th>
+              <th>Funções</th>
+              <th>Linhas</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="tableBody">
+            <!-- Dados serão inseridos via JavaScript -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Dados dos arquivos
+    const testData = [
+      { file: 'changePasswordUseCase.ts', module: 'auth', stmts: 100, branch: 100, funcs: 100, lines: 100 },
+      { file: 'forgotPasswordUseCase.ts', module: 'auth', stmts: 100, branch: 100, funcs: 100, lines: 100 },
+      { file: 'signInUseCase.ts', module: 'auth', stmts: 100, branch: 100, funcs: 100, lines: 100 },
+      { file: 'validateUserUseCase.ts', module: 'auth', stmts: 100, branch: 100, funcs: 100, lines: 100 },
+      { file: 'sendEmailUseCase.ts', module: 'email', stmts: 100, branch: 100, funcs: 100, lines: 100 },
+      { file: 'createFeedbackUseCase.ts', module: 'feedback', stmts: 100, branch: 100, funcs: 100, lines: 100 },
+      { file: 'deleteFeedbackUseCase.ts', module: 'feedback', stmts: 100, branch: 100, funcs: 100, lines: 100 },
+      { file: 'editFeedbackUseCase.ts', module: 'feedback', stmts: 100, branch: 100, funcs: 100, lines: 100 },
+      { file: 'findAllFeedbackByProjectUser.ts', module: 'feedback', stmts: 100, branch: 100, funcs: 100, lines: 100 },
+      { file: 'findAllFeedbackUseCase.ts', module: 'feedback', stmts: 100, branch: 100, funcs: 100, lines: 100 },
+      { file: 'findByFeedbackUseCase.ts', module: 'feedback', stmts: 100, branch: 100, funcs: 100, lines: 100 },
+      { file: 'createLibraryUseCase.ts', module: 'library', stmts: 100, branch: 100, funcs: 100, lines: 100 },
+      { file: 'deleteLibraryUseCase.ts', module: 'library', stmts: 100, branch: 100, funcs: 100, lines: 100 },
+      { file: 'editLibraryUseCase.ts', module: 'library', stmts: 100, branch: 100, funcs: 100, lines: 100 },
+      { file: 'findAllLibraryUseCase.ts', module: 'library', stmts: 100, branch: 100, funcs: 100, lines: 100 },
+      { file: 'findByLibraryUseCase.ts', module: 'library', stmts: 100, branch: 100, funcs: 100, lines: 100 },
+      { file: 'findByProjectUseCase.ts', module: 'library', stmts: 100, branch: 100, funcs: 100, lines: 100 },
+      { file: 'createMatchingUseCase.ts', module: 'matching', stmts: 100, branch: 100, funcs: 100, lines: 100 },
+      { file: 'deleteMatchingUseCase.ts', module: 'matching', stmts: 100, branch: 100, funcs: 100, lines: 100 },
+      { file: 'editMatchingUseCase.ts', module: 'matching', stmts: 100, branch: 100, funcs: 100, lines: 100 },
+      { file: 'findAllMatchingUseCase.ts', module: 'matching', stmts: 100, branch: 100, funcs: 100, lines: 100 },
+      { file: 'findByMatchingUseCase.ts', module: 'matching', stmts: 100, branch: 100, funcs: 100, lines: 100 },
+      { file: 'findByUserTypeUseCase.ts', module: 'matching', stmts: 0, branch: 0, funcs: 0, lines: 0 },
+      { file: 'createPreMatchingUseCase.ts', module: 'preMatching', stmts: 100, branch: 100, funcs: 100, lines: 100 },
+      { file: 'deletePreMatchingUseCase.ts', module: 'preMatching', stmts: 100, branch: 100, funcs: 100, lines: 100 },
+      { file: 'findAllPreMatchingUseCase.ts', module: 'preMatching', stmts: 0, branch: 0, funcs: 0, lines: 0 },
+      { file: 'findByPreMatchingUseCase.ts', module: 'preMatching', stmts: 100, branch: 100, funcs: 100, lines: 100 },
+      { file: 'findByUserTypeUseCase.ts', module: 'preMatching', stmts: 0, branch: 0, funcs: 0, lines: 0 },
+      { file: 'createProjectUseCase.ts', module: 'project', stmts: 100, branch: 100, funcs: 100, lines: 100 },
+      { file: 'deleteProjectUseCase.ts', module: 'project', stmts: 100, branch: 100, funcs: 100, lines: 100 },
+      { file: 'editProjectUseCase.ts', module: 'project', stmts: 100, branch: 100, funcs: 100, lines: 100 },
+      { file: 'findAllProjectUseCase.ts', module: 'project', stmts: 100, branch: 50, funcs: 100, lines: 100 },
+      { file: 'findByIdProjectUseCase.ts', module: 'project', stmts: 100, branch: 100, funcs: 100, lines: 100 },
+      { file: 'findByIsAvailableProjectUseCase.ts', module: 'project', stmts: 100, branch: 100, funcs: 100, lines: 100 },
+      { file: 'findByMonthProjectUseCase.ts', module: 'project', stmts: 100, branch: 100, funcs: 100, lines: 100 },
+      { file: 'findByUserUseCase.ts', module: 'project', stmts: 0, branch: 0, funcs: 0, lines: 0 },
+      { file: 'findMyProjectByIdUseCase.ts', module: 'project', stmts: 0, branch: 0, funcs: 0, lines: 0 },
+      { file: 'createProjectFormUseCase.ts', module: 'projectForm', stmts: 100, branch: 100, funcs: 100, lines: 100 },
+      { file: 'deleteProjectFormUseCase.ts', module: 'projectForm', stmts: 100, branch: 100, funcs: 100, lines: 100 },
+      { file: 'editProjectFormUseCase.ts', module: 'projectForm', stmts: 100, branch: 100, funcs: 100, lines: 100 },
+      { file: 'findAllProjectFormUseCase.ts', module: 'projectForm', stmts: 100, branch: 100, funcs: 100, lines: 100 },
+      { file: 'findByProjectFormUseCase.ts', module: 'projectForm', stmts: 100, branch: 100, funcs: 100, lines: 100 },
+      { file: 'findByUserProjectFormUseCase.ts', module: 'projectForm', stmts: 100, branch: 100, funcs: 100, lines: 100 },
+      { file: 'createUserMentorUseCase.ts', module: 'user', stmts: 100, branch: 100, funcs: 100, lines: 100 },
+      { file: 'createUserSeedUseCase.ts', module: 'user', stmts: 100, branch: 100, funcs: 100, lines: 100 },
+      { file: 'createVerificationEmailUseCase.ts', module: 'user', stmts: 96.77, branch: 100, funcs: 100, lines: 95.65 },
+      { file: 'deleteUserUseCase.ts', module: 'user', stmts: 100, branch: 100, funcs: 100, lines: 100 },
+      { file: 'editUserMentorDataProfileUseCase.ts', module: 'user', stmts: 100, branch: 100, funcs: 100, lines: 100 },
+      { file: 'editUserMentorDataUseCase.ts', module: 'user', stmts: 100, branch: 80, funcs: 100, lines: 100 },
+      { file: 'editUserMentorProfileUseCase.ts', module: 'user', stmts: 100, branch: 100, funcs: 100, lines: 100 },
+      { file: 'editUserSeedDataProfileUseCase.ts', module: 'user', stmts: 100, branch: 100, funcs: 100, lines: 100 },
+      { file: 'editUserSeedDataUseCase.ts', module: 'user', stmts: 100, branch: 100, funcs: 100, lines: 100 },
+      { file: 'editUserSeedProfileUseCase.ts', module: 'user', stmts: 100, branch: 100, funcs: 100, lines: 100 },
+      { file: 'editUserUseCase.ts', module: 'user', stmts: 100, branch: 100, funcs: 100, lines: 100 },
+      { file: 'findByUserMentorUseCase.ts', module: 'user', stmts: 100, branch: 100, funcs: 100, lines: 100 },
+      { file: 'findByUserSeedUseCase.ts', module: 'user', stmts: 100, branch: 100, funcs: 100, lines: 100 },
+      { file: 'findByUserUseCase.ts', module: 'user', stmts: 100, branch: 100, funcs: 100, lines: 100 },
+      { file: 'recusedUserMentorUseCase.ts', module: 'user', stmts: 100, branch: 100, funcs: 100, lines: 100 },
+      { file: 'toggleProfileStatusUseCase.ts', module: 'user', stmts: 100, branch: 100, funcs: 100, lines: 100 },
+      { file: 'verificationEmailUseCase.ts', module: 'user', stmts: 100, branch: 100, funcs: 100, lines: 100 }
+    ];
+
+    function getStatusClass(coverage) {
+      if (coverage >= 90) return 'excellent';
+      if (coverage >= 70) return 'good';
+      if (coverage > 0) return 'poor';
+      return 'none';
+    }
+
+    function getStatusText(coverage) {
+      if (coverage >= 90) return 'Excelente';
+      if (coverage >= 70) return 'Boa';
+      if (coverage > 0) return 'Baixa';
+      return 'Sem Cobertura';
+    }
+
+    function getCoverageColor(coverage) {
+      if (coverage >= 90) return '#27ae60';
+      if (coverage >= 70) return '#f39c12';
+      if (coverage > 0) return '#e74c3c';
+      return '#95a5a6';
+    }
+
+    function renderTable(data = testData) {
+      const tbody = document.getElementById('tableBody');
+      tbody.innerHTML = '';
+
+      data.forEach(item => {
+        const avgCoverage = (item.stmts + item.branch + item.funcs + item.lines) / 4;
+        const row = document.createElement('tr');
+
+        row.innerHTML = `
+                    <td><strong>${item.file}</strong></td>
+                    <td><span class="status-badge ${item.module}">${item.module}</span></td>
+                    <td>
+                        <div class="coverage-bar">
+                            <div class="coverage-fill" style="width: ${item.stmts}%; background-color: ${getCoverageColor(item.stmts)}"></div>
+                            <div class="coverage-text">${item.stmts}%</div>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="coverage-bar">
+                            <div class="coverage-fill" style="width: ${item.branch}%; background-color: ${getCoverageColor(item.branch)}"></div>
+                            <div class="coverage-text">${item.branch}%</div>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="coverage-bar">
+                            <div class="coverage-fill" style="width: ${item.funcs}%; background-color: ${getCoverageColor(item.funcs)}"></div>
+                            <div class="coverage-text">${item.funcs}%</div>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="coverage-bar">
+                            <div class="coverage-fill" style="width: ${item.lines}%; background-color: ${getCoverageColor(item.lines)}"></div>
+                            <div class="coverage-text">${item.lines}%</div>
+                        </div>
+                    </td>
+                    <td><span class="status-badge ${getStatusClass(avgCoverage)}">${getStatusText(avgCoverage)}</span></td>
+                `;
+
+        tbody.appendChild(row);
+      });
+    }
+
+    function filterData() {
+      const moduleFilter = document.getElementById('moduleFilter').value;
+      const searchFilter = document.getElementById('searchFilter').value.toLowerCase();
+      const coverageFilter = document.getElementById('coverageFilter').value;
+
+      let filtered = testData.filter(item => {
+        const matchesModule = !moduleFilter || item.module === moduleFilter;
+        const matchesSearch = !searchFilter || item.file.toLowerCase().includes(searchFilter);
+
+        let matchesCoverage = true;
+        if (coverageFilter) {
+          const avgCoverage = (item.stmts + item.branch + item.funcs + item.lines) / 4;
+          switch (coverageFilter) {
+            case 'excellent': matchesCoverage = avgCoverage >= 90; break;
+            case 'good': matchesCoverage = avgCoverage >= 70 && avgCoverage < 90; break;
+            case 'poor': matchesCoverage = avgCoverage > 0 && avgCoverage < 70; break;
+            case 'none': matchesCoverage = avgCoverage === 0; break;
+          }
+        }
+
+        return matchesModule && matchesSearch && matchesCoverage;
+      });
+
+      renderTable(filtered);
+    }
+
+    // Event listeners para filtros
+    document.getElementById('moduleFilter').addEventListener('change', filterData);
+    document.getElementById('searchFilter').addEventListener('input', filterData);
+    document.getElementById('coverageFilter').addEventListener('change', filterData);
+
+    // Gráfico geral
+    const overallCtx = document.getElementById('overallChart').getContext('2d');
+    new Chart(overallCtx, {
+      type: 'doughnut',
+      data: {
+        labels: ['Statements', 'Branches', 'Funções', 'Linhas'],
+        datasets: [{
+          data: [90.41, 84.92, 88.80, 90.58],
+          backgroundColor: ['#3498db', '#e74c3c', '#f39c12', '#27ae60'],
+          borderWidth: 3,
+          borderColor: '#fff'
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: {
+            position: 'bottom'
+          }
+        }
+      }
+    });
+
+    // Gráfico por módulo
+    const moduleStats = {};
+    testData.forEach(item => {
+      if (!moduleStats[item.module]) {
+        moduleStats[item.module] = { stmts: [], branch: [], funcs: [], lines: [] };
+      }
+      moduleStats[item.module].stmts.push(item.stmts);
+      moduleStats[item.module].branch.push(item.branch);
+      moduleStats[item.module].funcs.push(item.funcs);
+      moduleStats[item.module].lines.push(item.lines);
+    });
+
+    const moduleLabels = Object.keys(moduleStats);
+    const moduleAvgStmts = moduleLabels.map(module => {
+      const avg = moduleStats[module].stmts.reduce((a, b) => a + b, 0) / moduleStats[module].stmts.length;
+      return Math.round(avg * 100) / 100;
+    });
+
+    const moduleCtx = document.getElementById('moduleChart').getContext('2d');
+    new Chart(moduleCtx, {
+      type: 'bar',
+      data: {
+        labels: moduleLabels,
+        datasets: [{
+          label: 'Cobertura Média (%)',
+          data: moduleAvgStmts,
+          backgroundColor: '#3498db',
+          borderColor: '#2980b9',
+          borderWidth: 2
+        }]
+      },
+      options: {
+        responsive: true,
+        scales: {
+          y: {
+            beginAtZero: true,
+            max: 100
+          }
+        }
+      }
+    });
+
+    // Renderizar tabela inicial
+    renderTable();
+  </script>
+</body>
+
+</html>
